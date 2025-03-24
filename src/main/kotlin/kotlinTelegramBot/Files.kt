@@ -1,4 +1,4 @@
-package KotlinTelegramBot
+package kotlinTelegramBot
 
 import java.io.File
 
