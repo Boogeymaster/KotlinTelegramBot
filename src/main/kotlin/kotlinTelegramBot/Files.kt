@@ -1,6 +1,7 @@
 package kotlinTelegramBot
 
 import java.io.File
+const val LEARNED_WORDS_COUNT = 3
 
 fun main() {
     val dictionary = loadDictionary()
@@ -30,7 +31,7 @@ fun loadDictionary(): List<Word> {
 }
 
 fun getStatDictionary(dictionary: List<Word>): String {
-    val learnedWordsList = dictionary.filter { it.correctAnswersCount >= 3 }
+    val learnedWordsList = dictionary.filter { it.correctAnswersCount >= LEARNED_WORDS_COUNT }
     val totalCount = dictionary.count()
     val learnedCount = learnedWordsList.count()
     val percent = learnedCount * 100 / totalCount
