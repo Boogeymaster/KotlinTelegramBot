@@ -36,11 +36,9 @@ fun main() {
 }
 
 fun learnWords(questionWords: List<Word>) {
-    for (correctAnswer in questionWords.indices) {
-        println("${questionWords[correctAnswer].original}:")
-        for (i in questionWords.indices) {
-            println("${i + 1} - ${questionWords[i].translate}")
-        }
+    questionWords.forEach {
+        println(questionWords.mapIndexed { index, word -> "${index + 1} - ${word.translate}" }
+            .joinToString("\n", "${it.original}:\n", "\n----------\n0 - Выход"))
         readln()
     }
 }
