@@ -1,10 +1,14 @@
 package kotlinTelegramBot
 
 import java.io.File
+
 const val LEARNED_WORDS_COUNT = 3
+const val TO_LEARN_WORDS_COUNT = 4
 
 fun main() {
     val dictionary = loadDictionary()
+
+
     while (true) {
         println(
             """
@@ -15,11 +19,27 @@ fun main() {
     """.trimIndent()
         )
         when (readln()) {
-            "1" -> println("Выбран пункт \"Учить слова\"")
+            "1" -> {
+                val notLearnedList = dictionary.filter { it.correctAnswersCount < LEARNED_WORDS_COUNT }
+                if (notLearnedList.isEmpty()) {
+                    println("Все слова в словаре выучены\n")
+                    continue
+                }
+                learnWords(notLearnedList.shuffled().take(TO_LEARN_WORDS_COUNT))
+            }
+
             "2" -> println(getStatDictionary(dictionary))
             "0" -> return
             else -> println("Введите число 1, 2 или 0")
         }
+    }
+}
+
+fun learnWords(questionWords: List<Word>) {
+    questionWords.forEach {
+        println(questionWords.mapIndexed { index, word -> "${index + 1} - ${word.translate}" }
+            .joinToString("\n", "${it.original}:\n", "\n----------\n0 - Выход"))
+        readln()
     }
 }
 
