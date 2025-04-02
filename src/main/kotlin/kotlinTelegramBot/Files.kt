@@ -7,8 +7,6 @@ const val TO_LEARN_WORDS_COUNT = 4
 
 fun main() {
     val dictionary = loadDictionary()
-
-
     while (true) {
         println(
             """
@@ -25,9 +23,8 @@ fun main() {
                     println("Все слова в словаре выучены\n")
                     continue
                 }
-                learnWords(notLearnedList.shuffled().take(TO_LEARN_WORDS_COUNT))
+                learnWords(notLearnedList.shuffled().take(TO_LEARN_WORDS_COUNT), dictionary)
             }
-
             "2" -> println(getStatDictionary(dictionary))
             "0" -> return
             else -> println("Введите число 1, 2 или 0")
@@ -35,12 +32,26 @@ fun main() {
     }
 }
 
-fun learnWords(questionWords: List<Word>) {
-    questionWords.forEach {
+fun learnWords(questionWords: List<Word>, dictionary: List<Word>) {
+    for (questionWord in questionWords) {
+        val correctAnswerId = questionWords.indexOf(questionWord)
         println(questionWords.mapIndexed { index, word -> "${index + 1} - ${word.translate}" }
-            .joinToString("\n", "${it.original}:\n", "\n----------\n0 - Выход"))
-        readln()
+            .joinToString("\n", "${questionWord.original}:\n", "\n----------\n0 - Меню\n"))
+        when (readln().toInt()) {
+            correctAnswerId + 1 -> {
+                questionWord.correctAnswersCount++
+                saveDictionary(dictionary.map { if (it.original == questionWord.original) questionWord else it })
+                println("Правильно!")
+            }
+            0 -> break
+            else -> println("Неправильно! ${questionWord.original} – это ${questionWord.translate}")
+        }
     }
+}
+
+fun saveDictionary(dictionary: List<Word>) {
+    File("words.txt").writeText(dictionary.joinToString("\n")
+    { "${it.original}|${it.translate}|${it.correctAnswersCount}" })
 }
 
 fun loadDictionary(): List<Word> {
@@ -61,5 +72,5 @@ fun getStatDictionary(dictionary: List<Word>): String {
 data class Word(
     val original: String,
     val translate: String,
-    val correctAnswersCount: Int = 0,
+    var correctAnswersCount: Int = 0,
 )
