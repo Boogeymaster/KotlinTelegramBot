@@ -9,8 +9,19 @@ fun main() {
         when (readln().toIntOrNull()) {
             1 -> {
                 val question = trainer.getNextQuestion()
-                if (question == null) println("Все слова в словаре выучены\n")
-                else trainer.learnWords(question, trainer.dictionary)
+                if (question == null) {
+                    println("Все слова в словаре выучены\n")
+                    break
+                }
+                println(trainer.questionToString(question.variants, question.correctAnswer))
+                val userAnswer = readln().toIntOrNull()
+                if (userAnswer == 0) break
+                if (trainer.checkAnswer(userAnswer?.minus(1))){
+                    println("Правильно!")
+                }else{
+                    println("Неправильно! ${question.correctAnswer.original} – это ${question.correctAnswer.translate}")
+                }
+
             }
 
             2 -> {
