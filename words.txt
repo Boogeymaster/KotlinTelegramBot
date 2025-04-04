@@ -10,7 +10,7 @@ water|вода|2
 fire|огонь|3
 sun|солнце|2
 moon|луна|3
-star|звезда|2
+star|звезда|3
 cloud|облако|1
 river|река|1
 mountain|гора|2
@@ -18,7 +18,7 @@ bird|птица|1
 fish|рыба|0
 book|книга|2
 table|стол|1
-chair|стул|2
-window|окно|1
+chair|стул|3
+window|окно|3
 door|дверь|1
 road|дорога|3

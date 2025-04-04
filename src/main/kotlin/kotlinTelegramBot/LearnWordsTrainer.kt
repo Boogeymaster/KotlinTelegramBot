@@ -24,8 +24,9 @@ data class Question(
 
 class LearnWordsTrainer {
 
-    val dictionary = loadDictionary()
     private var question: Question? = null
+    val dictionary = loadDictionary()
+
 
     fun getStatistics(): Statistics {
         val learnedCount = dictionary.filter { it.correctAnswersCount >= LEARNED_WORDS_COUNT }.size
@@ -39,7 +40,7 @@ class LearnWordsTrainer {
         if (notLearnedList.isEmpty()) return null
         val variants = notLearnedList.shuffled().take(TO_LEARN_WORDS_COUNT)
         val correctAnswer = variants.random()
-        val question = Question(variants, correctAnswer)
+        question = Question(variants=variants, correctAnswer=correctAnswer)
         return question
     }
 
