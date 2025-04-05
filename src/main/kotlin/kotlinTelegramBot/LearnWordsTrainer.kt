@@ -2,12 +2,9 @@ package kotlinTelegramBot
 
 import java.io.File
 
-const val LEARNED_WORDS_COUNT = 3
-const val TO_LEARN_WORDS_COUNT = 4
-
 data class Statistics(
-    val totalCount: Int,
     val learnedCount: Int,
+    val totalCount: Int,
     val percent: Int,
 )
 
@@ -22,25 +19,31 @@ data class Question(
     val correctAnswer: Word,
 )
 
-class LearnWordsTrainer {
+class LearnWordsTrainer(private val learnedWordsCount: Int = 3, private val toLearnWordsCount:Int = 4) {
 
     private var question: Question? = null
     val dictionary = loadDictionary()
 
 
     fun getStatistics(): Statistics {
-        val learnedCount = dictionary.filter { it.correctAnswersCount >= LEARNED_WORDS_COUNT }.size
+        val learnedCount = dictionary.filter { it.correctAnswersCount >= learnedWordsCount }.count()
         val totalCount = dictionary.count()
         val percent = learnedCount * 100 / totalCount
         return Statistics(learnedCount, totalCount, percent)
     }
 
     fun getNextQuestion(): Question? {
-        val notLearnedList = dictionary.filter { it.correctAnswersCount < LEARNED_WORDS_COUNT }
+        val notLearnedList = dictionary.filter { it.correctAnswersCount < learnedWordsCount }
         if (notLearnedList.isEmpty()) return null
-        val variants = notLearnedList.shuffled().take(TO_LEARN_WORDS_COUNT)
+        val variants: List<Word> = if (notLearnedList.count() < toLearnWordsCount) {
+            val diff = toLearnWordsCount.minus(notLearnedList.count())
+            val learnedList = dictionary.shuffled().take(diff)
+            notLearnedList.take(toLearnWordsCount) + learnedList.take(diff)
+        } else {
+            notLearnedList.shuffled().take(toLearnWordsCount)
+        }
         val correctAnswer = variants.random()
-        question = Question(variants=variants, correctAnswer=correctAnswer)
+        question = Question(variants = variants, correctAnswer = correctAnswer)
         return question
     }
 
