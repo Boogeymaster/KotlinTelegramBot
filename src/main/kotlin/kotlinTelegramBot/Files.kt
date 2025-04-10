@@ -2,9 +2,9 @@ package kotlinTelegramBot
 
 
 fun main() {
-    val trainer =try {
+    val trainer = try {
         LearnWordsTrainer()
-    } catch (e: Exception){
+    } catch (e: Exception) {
         println("Не возможно загрузить словарь")
         return
     }
@@ -22,9 +22,9 @@ fun main() {
                 println(trainer.questionToString(question.variants, question.correctAnswer))
                 val userAnswer = readln().toIntOrNull()
                 if (userAnswer == 0) continue
-                if (trainer.checkAnswer(userAnswer?.minus(1))){
+                if (trainer.checkAnswer(userAnswer?.minus(1))) {
                     println("Правильно!")
-                }else{
+                } else {
                     println("Неправильно! ${question.correctAnswer.original} – это ${question.correctAnswer.translate}")
                 }
 
