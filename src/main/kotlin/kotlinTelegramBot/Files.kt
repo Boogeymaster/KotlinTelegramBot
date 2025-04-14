@@ -2,7 +2,13 @@ package kotlinTelegramBot
 
 
 fun main() {
-    val trainer = LearnWordsTrainer()
+    val trainer = try {
+        LearnWordsTrainer()
+    } catch (e: Exception) {
+        println("Не возможно загрузить словарь")
+        return
+    }
+
 
     while (true) {
         print("Меню:\n1 – Учить слова\n2 – Статистика\n0 – Выход\n")
@@ -15,10 +21,10 @@ fun main() {
                 }
                 println(trainer.questionToString(question.variants, question.correctAnswer))
                 val userAnswer = readln().toIntOrNull()
-                if (userAnswer == 0) break
-                if (trainer.checkAnswer(userAnswer?.minus(1))){
+                if (userAnswer == 0) continue
+                if (trainer.checkAnswer(userAnswer?.minus(1))) {
                     println("Правильно!")
-                }else{
+                } else {
                     println("Неправильно! ${question.correctAnswer.original} – это ${question.correctAnswer.translate}")
                 }
 
