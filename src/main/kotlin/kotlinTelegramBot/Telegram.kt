@@ -8,16 +8,14 @@ import java.net.http.HttpResponse
 fun main(args: Array<String>) {
     val botToken = args[0]
     var updateId = 0
+    val updateIdRegex: Regex = "\"update_id\":(.+?),".toRegex()
+    val messageRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
     while (true) {
         Thread.sleep(2000)
         val updates = getUpdates(botToken, updateId)
         println(updates)
-        val startUpdateId = updates.lastIndexOf("\"update_id\"")
-        val endUpdateId = updates.lastIndexOf(",\n\"message\"")
-        if (startUpdateId == -1 || endUpdateId == -1) continue
-        val updateIdString = updates.substring(startUpdateId + 12, endUpdateId)
-        println("updStr = $updateIdString")
-        updateId = updateIdString.toInt() + 1
+        updateId = parseFromUpdate(updateIdRegex, updates)?.toInt()?.plus(1) ?: continue
+        println("${parseFromUpdate(messageRegex, updates)}")
     }
 }
 
@@ -29,4 +27,10 @@ fun getUpdates(botToken: String, updateId: Int): String {
         HttpResponse.BodyHandlers.ofString()
     )
     return response.body()
+}
+
+fun parseFromUpdate(regex: Regex, updates: String): String? {
+    val matchResult = regex.find(updates)
+    val groups = matchResult?.groups
+    return groups?.get(1)?.value
 }
