@@ -10,7 +10,8 @@ fun main(args: Array<String>) {
         val updates = botService.getUpdates(updateId)
         updateId = botService.parseFromUpdate(botService.updateIdRegex, updates)?.toInt()?.plus(1) ?: continue
         if (botService.parseFromUpdate(botService.messageRegex, updates).equals("/start")) {
-            botService.sendMenu(botService.parseFromUpdate(botService.chatIdRegex, updates))
+            val chatId = botService.parseFromUpdate(botService.chatIdRegex, updates) ?: continue
+            botService.sendMenu(chatId)
         }
         println(botService.parseFromUpdate(botService.dataRegex, updates))
     }
