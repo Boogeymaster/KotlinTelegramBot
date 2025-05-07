@@ -39,7 +39,7 @@ fun checkNextQuestionAndSend(
     if (question == null) {
         botService.sendMessage(
             chatId,
-            "Все слова в словаре выучены"
+            "Вы выучили все слова в базе"
         )
     } else {
         botService.sendQuestion(chatId, question)
