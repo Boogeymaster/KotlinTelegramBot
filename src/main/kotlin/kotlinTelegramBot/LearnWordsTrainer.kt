@@ -21,7 +21,7 @@ data class Question(
 
 class LearnWordsTrainer(private val learnedWordsCount: Int = 3, private val toLearnWordsCount: Int = 4) {
 
-    private var question: Question? = null
+    var question: Question? = null
     val dictionary = loadDictionary()
 
 
