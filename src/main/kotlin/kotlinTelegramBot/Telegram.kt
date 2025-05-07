@@ -4,24 +4,19 @@ fun main(args: Array<String>) {
     val botToken = args[0]
     val botService = TelegramBotService(botToken)
     var updateId = 0
-    var chatId = ""
-    val trainer = try {
-        LearnWordsTrainer()
-    } catch (e: Exception) {
-        println("Не возможно загрузить словарь")
-        return
-    }
+    var chatId: String
+    val trainer = LearnWordsTrainer()
     while (true) {
         Thread.sleep(2000)
         val updates = botService.getUpdates(updateId)
         updateId = botService.parseFromUpdate(botService.updateIdRegex, updates)?.toInt()?.plus(1) ?: continue
+        chatId = botService.parseFromUpdate(botService.chatIdRegex, updates) ?: continue
         if (botService.parseFromUpdate(botService.messageRegex, updates).equals("/start")) {
-            chatId = botService.parseFromUpdate(botService.chatIdRegex, updates) ?: continue
             botService.sendMenu(chatId)
         }
         when (botService.parseFromUpdate(botService.dataRegex, updates)) {
             LEARN_WORDS_BUTTON -> {
-                TODO()
+                checkNextQuestionAndSend(trainer, botService, chatId)
             }
 
             STATISTIC_BUTTON -> {
@@ -32,5 +27,21 @@ fun main(args: Array<String>) {
                 )
             }
         }
+    }
+}
+
+fun checkNextQuestionAndSend(
+    trainer: LearnWordsTrainer,
+    botService: TelegramBotService,
+    chatId: String,
+) {
+    val question = trainer.getNextQuestion()
+    if (question == null) {
+        botService.sendMessage(
+            chatId,
+            "Все слова в словаре выучены"
+        )
+    } else {
+        botService.sendQuestion(chatId, question)
     }
 }
