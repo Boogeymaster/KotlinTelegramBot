@@ -10,12 +10,13 @@ import java.nio.charset.StandardCharsets
 const val TELEGRAM_URL = "https://api.telegram.org"
 const val LEARN_WORDS_BUTTON = "learn_words_clicked"
 const val STATISTIC_BUTTON = "statistic_clicked"
+const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
 
 class TelegramBotService(val botToken: String) {
 
     val updateIdRegex: Regex = "\"update_id\":(.+?),".toRegex()
     val messageRegex: Regex = "\"text\":\"(.+?)\"".toRegex()
-    val chatIdRegex: Regex = "\"id\":(.+?),".toRegex()
+    val chatIdRegex: Regex = "\"chat\":\\{\"id\":(.+?),".toRegex()
     val dataRegex = "\"data\":\"(.+?)\"".toRegex()
     val client: HttpClient? = HttpClient.newBuilder().build()
 
@@ -43,7 +44,7 @@ class TelegramBotService(val botToken: String) {
         )
     }
 
-    fun sendMenu(chatId: String): String {
+    fun sendMenu(chatId: String) {
         val urlSendMess = "$TELEGRAM_URL/bot$botToken/sendMessage"
         val sendMenuBody = """
             {
@@ -69,10 +70,43 @@ class TelegramBotService(val botToken: String) {
             .header("Content-type", "application/json")
             .POST(HttpRequest.BodyPublishers.ofString(sendMenuBody))
             .build()
-        val response = client?.send(
+        client?.send(
             request, HttpResponse.BodyHandlers.ofString()
         )
-        return response?.body() ?: "Nothing"
     }
 
+    fun sendQuestion(chatId: String, question: Question) {
+        val urlSendMess = "$TELEGRAM_URL/bot$botToken/sendMessage"
+        val inlineKeyboardBody = question.variants.mapIndexed { index, word ->
+            """[
+                    {
+                        "text": "${index + 1} - ${word.translate}",
+                        "callback_data": "$CALLBACK_DATA_ANSWER_PREFIX${index + 1}"
+                    }
+                ]""".trimIndent()
+        }.joinToString(
+            ",\n",
+            """"inline_keyboard": [
+                        """.trimIndent(),
+            """
+                    ]""".trimIndent()
+        )
+
+        val sendMenuBody = """
+            {
+                "chat_id": $chatId,
+                "text": "${question.correctAnswer.original}",
+                "reply_markup": {
+                    $inlineKeyboardBody
+                }
+            }
+        """.trimIndent()
+        val request = HttpRequest.newBuilder().uri(URI.create(urlSendMess))
+            .header("Content-type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(sendMenuBody))
+            .build()
+        client?.send(
+            request, HttpResponse.BodyHandlers.ofString()
+        )
+    }
 }
