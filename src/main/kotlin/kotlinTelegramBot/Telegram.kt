@@ -14,6 +14,7 @@ fun main(args: Array<String>) {
         if (botService.parseFromUpdate(botService.messageRegex, updates).equals("/start")) {
             botService.sendMenu(chatId)
         }
+        val data = botService.parseFromUpdate(botService.dataRegex, updates) ?: continue
         when (botService.parseFromUpdate(botService.dataRegex, updates)) {
             LEARN_WORDS_BUTTON -> {
                 checkNextQuestionAndSend(trainer, botService, chatId)
@@ -26,6 +27,21 @@ fun main(args: Array<String>) {
                     "Выучено ${statistics.learnedCount} из ${statistics.totalCount} слов ${statistics.percent}%"
                 )
             }
+        }
+        if (data.startsWith(CALLBACK_DATA_ANSWER_PREFIX)){
+            val userAnswerIndex = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
+            if (trainer.checkAnswer(userAnswerIndex.minus(1))) {
+                botService.sendMessage(
+                    chatId,
+                    "Правильно!"
+                )
+            } else {
+                botService.sendMessage(
+                    chatId,
+                    "Неправильно! ${trainer.question?.correctAnswer?.original} – это ${trainer.question?.correctAnswer?.translate}"
+                )
+            }
+            checkNextQuestionAndSend(trainer, botService, chatId)
         }
     }
 }
