@@ -1,5 +1,6 @@
 package kotlinTelegramBot
 
+import kotlinx.serialization.Serializable
 import java.io.File
 
 data class Statistics(
@@ -7,7 +8,7 @@ data class Statistics(
     val totalCount: Int,
     val percent: Int,
 )
-
+@Serializable
 data class Word(
     val original: String,
     val translate: String,
