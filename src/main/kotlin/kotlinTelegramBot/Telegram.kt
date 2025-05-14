@@ -84,38 +84,32 @@ fun main(args: Array<String>) {
         val firstUpdate = update.firstOrNull() ?: continue
         updateId = firstUpdate.updateId + 1
         val message = firstUpdate.message?.text
-        val chatId = firstUpdate.message?.chat?.id ?: firstUpdate.callbackQuery?.message?.chat?.id
-        if (message == "/start" && chatId != null) {
-            botService.sendMenu(json, chatId)
+        val chatId = firstUpdate.message?.chat?.id ?: firstUpdate.callbackQuery?.message?.chat?.id ?: continue
+        if (message == "/start") {
+            botService.sendMenu(chatId)
         }
         val data = firstUpdate.callbackQuery?.data
-        if (data == LEARN_WORDS_BUTTON && chatId != null) {
-            checkNextQuestionAndSend(trainer, botService, chatId, json)
+        when (data) {
+            LEARN_WORDS_BUTTON -> checkNextQuestionAndSend(trainer, botService, chatId)
+            STATISTIC_BUTTON -> {
+                val statistics = trainer.getStatistics()
+                botService.sendMessage(
+                    chatId,
+                    "Выучено ${statistics.learnedCount} из ${statistics.totalCount} слов ${statistics.percent}%"
+                )
+            }
         }
-        if (data == STATISTIC_BUTTON && chatId != null) {
-            val statistics = trainer.getStatistics()
-            botService.sendMessage(
-                json,
-                chatId,
-                "Выучено ${statistics.learnedCount} из ${statistics.totalCount} слов ${statistics.percent}%"
-            )
-        }
-        if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true && chatId != null) {
+        if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {
             val userAnswerIndex = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
             if (trainer.checkAnswer(userAnswerIndex.minus(1))) {
-                botService.sendMessage(
-                    json,
-                    chatId,
-                    "Правильно!"
-                )
+                botService.sendMessage(chatId, "Правильно!")
             } else {
                 botService.sendMessage(
-                    json,
                     chatId,
                     "Неправильно! ${trainer.question?.correctAnswer?.original} – это ${trainer.question?.correctAnswer?.translate}"
                 )
             }
-            checkNextQuestionAndSend(trainer, botService, chatId, json)
+            checkNextQuestionAndSend(trainer, botService, chatId)
         }
     }
 }
@@ -124,16 +118,14 @@ fun checkNextQuestionAndSend(
     trainer: LearnWordsTrainer,
     botService: TelegramBotService,
     chatId: Long,
-    json: Json,
 ) {
     val question = trainer.getNextQuestion()
     if (question == null) {
         botService.sendMessage(
-            json,
             chatId,
             "Вы выучили все слова в базе"
         )
     } else {
-        botService.sendQuestion(json, chatId, question)
+        botService.sendQuestion(chatId, question)
     }
 }

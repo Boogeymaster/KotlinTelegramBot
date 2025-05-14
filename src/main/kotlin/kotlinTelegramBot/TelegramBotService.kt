@@ -14,6 +14,9 @@ const val CALLBACK_DATA_ANSWER_PREFIX = "answer_"
 class TelegramBotService(val botToken: String) {
 
     val client: HttpClient? = HttpClient.newBuilder().build()
+    val json = Json {
+        ignoreUnknownKeys = true
+    }
 
     fun getUpdates(updateId: Long): String {
         val urlGetUpdates = "$TELEGRAM_URL/bot$botToken/getUpdates?offset=$updateId"
@@ -24,7 +27,7 @@ class TelegramBotService(val botToken: String) {
         return response?.body() ?: ""
     }
 
-    fun sendMessage(json: Json, chatId: Long, text: String) {
+    fun sendMessage(chatId: Long, text: String) {
         val urlSendMess = "$TELEGRAM_URL/bot$botToken/sendMessage"
         val requestBody = SendMessRequest(
             chatId = chatId,
@@ -40,7 +43,7 @@ class TelegramBotService(val botToken: String) {
         )
     }
 
-    fun sendMenu(json: Json, chatId: Long) {
+    fun sendMenu(chatId: Long) {
         val urlSendMess = "$TELEGRAM_URL/bot$botToken/sendMessage"
         val requestBody = SendMessRequest(
             chatId = chatId,
@@ -70,7 +73,7 @@ class TelegramBotService(val botToken: String) {
         )
     }
 
-    fun sendQuestion(json: Json, chatId: Long, question: Question) {
+    fun sendQuestion(chatId: Long, question: Question) {
         val urlSendMess = "$TELEGRAM_URL/bot$botToken/sendMessage"
         val requestBody = SendMessRequest(
             chatId = chatId,
