@@ -3,6 +3,7 @@ package kotlinTelegramBot
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.text.substringAfter
 
 @Serializable
 data class Update(
@@ -22,9 +23,9 @@ data class Response(
 @Serializable
 data class Message(
     @SerialName("text")
-    val text: String,
+    val text: String? = null,
     @SerialName("chat")
-    val chat: Chat,
+    val chat: Chat? = null,
 )
 
 @Serializable
@@ -71,46 +72,18 @@ fun main(args: Array<String>) {
     val botToken = args[0]
     val botService = TelegramBotService(botToken)
     var updateId = 0L
-    val trainer = LearnWordsTrainer()
+    val trainers = HashMap<Long, LearnWordsTrainer>()
     val json = Json {
         ignoreUnknownKeys = true
     }
     while (true) {
-        Thread.sleep(2000)
         val responseString = botService.getUpdates(updateId)
         println(responseString)
         val response: Response = json.decodeFromString(responseString)
-        val update = response.result
-        val firstUpdate = update.firstOrNull() ?: continue
-        updateId = firstUpdate.updateId + 1
-        val message = firstUpdate.message?.text
-        val chatId = firstUpdate.message?.chat?.id ?: firstUpdate.callbackQuery?.message?.chat?.id ?: continue
-        if (message == "/start") {
-            botService.sendMenu(chatId)
-        }
-        val data = firstUpdate.callbackQuery?.data
-        when (data) {
-            LEARN_WORDS_BUTTON -> checkNextQuestionAndSend(trainer, botService, chatId)
-            STATISTIC_BUTTON -> {
-                val statistics = trainer.getStatistics()
-                botService.sendMessage(
-                    chatId,
-                    "Выучено ${statistics.learnedCount} из ${statistics.totalCount} слов ${statistics.percent}%"
-                )
-            }
-        }
-        if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {
-            val userAnswerIndex = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
-            if (trainer.checkAnswer(userAnswerIndex.minus(1))) {
-                botService.sendMessage(chatId, "Правильно!")
-            } else {
-                botService.sendMessage(
-                    chatId,
-                    "Неправильно! ${trainer.question?.correctAnswer?.original} – это ${trainer.question?.correctAnswer?.translate}"
-                )
-            }
-            checkNextQuestionAndSend(trainer, botService, chatId)
-        }
+        if (response.result.isEmpty()) continue
+        val sortedUpdates = response.result.sortedBy { it.updateId }
+        sortedUpdates.forEach { handleUpdate(it, botService, trainers) }
+        updateId = sortedUpdates.last().updateId + 1
     }
 }
 
@@ -127,5 +100,40 @@ fun checkNextQuestionAndSend(
         )
     } else {
         botService.sendQuestion(chatId, question)
+    }
+}
+
+fun handleUpdate(update: Update, botService: TelegramBotService, trainers: HashMap<Long, LearnWordsTrainer>) {
+    val chatId = update.message?.chat?.id ?: update.callbackQuery?.message?.chat?.id ?: return
+    val trainer = trainers.getOrPut(chatId) { LearnWordsTrainer(fileName = "$chatId.txt") }
+    val message = update.message?.text
+    if (message == "/start") botService.sendMenu(chatId)
+    val data = update.callbackQuery?.data
+    when (data) {
+        LEARN_WORDS_BUTTON -> checkNextQuestionAndSend(trainer, botService, chatId)
+        RESET_PROGRESS_BUTTON -> {
+            trainer.resetProgress()
+            botService.sendMessage(chatId, "Прогресс успешно сброшен")
+        }
+
+        STATISTIC_BUTTON -> {
+            val statistics = trainer.getStatistics()
+            botService.sendMessage(
+                chatId,
+                "Выучено ${statistics.learnedCount} из ${statistics.totalCount} слов ${statistics.percent}%"
+            )
+        }
+    }
+    if (data?.startsWith(CALLBACK_DATA_ANSWER_PREFIX) == true) {
+        val userAnswerIndex = data.substringAfter(CALLBACK_DATA_ANSWER_PREFIX).toInt()
+        if (trainer.checkAnswer(userAnswerIndex.minus(1))) {
+            botService.sendMessage(chatId, "Правильно!")
+        } else {
+            botService.sendMessage(
+                chatId,
+                "Неправильно! ${trainer.question?.correctAnswer?.original} – это ${trainer.question?.correctAnswer?.translate}"
+            )
+        }
+        checkNextQuestionAndSend(trainer, botService, chatId)
     }
 }
