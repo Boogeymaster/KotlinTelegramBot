@@ -8,6 +8,7 @@ data class Statistics(
     val totalCount: Int,
     val percent: Int,
 )
+
 @Serializable
 data class Word(
     val original: String,
@@ -20,14 +21,18 @@ data class Question(
     val correctAnswer: Word,
 )
 
-class LearnWordsTrainer(private val learnedWordsCount: Int = 3, private val toLearnWordsCount: Int = 4) {
+class LearnWordsTrainer(
+    private val learnedWordsCount: Int = 3,
+    private val toLearnWordsCount: Int = 4,
+    private val fileName: String = "words.txt"
+) {
 
     var question: Question? = null
     val dictionary = loadDictionary()
 
 
     fun getStatistics(): Statistics {
-        val learnedCount = dictionary.filter { it.correctAnswersCount >= learnedWordsCount }.count()
+        val learnedCount = dictionary.count { it.correctAnswersCount >= learnedWordsCount }
         val totalCount = dictionary.count()
         val percent = learnedCount * 100 / totalCount
         return Statistics(learnedCount, totalCount, percent)
@@ -53,20 +58,22 @@ class LearnWordsTrainer(private val learnedWordsCount: Int = 3, private val toLe
             val correctAnswerId = it.variants.indexOf(it.correctAnswer)
             if (userAnswer == correctAnswerId) {
                 it.correctAnswer.correctAnswersCount++
-                saveDictionary(dictionary)
+                saveDictionary()
                 true
             } else false
         } ?: false
     }
 
-    private fun saveDictionary(dictionary: List<Word>) {
-        File("words.txt").writeText(
+    private fun saveDictionary() {
+        File(fileName).writeText(
             dictionary.joinToString("\n")
             { "${it.original}|${it.translate}|${it.correctAnswersCount}" })
     }
 
     private fun loadDictionary(): List<Word> {
-        return File("words.txt").readLines().map {
+        val wordsFile = File(fileName)
+        if (!wordsFile.exists()) File("words.txt").copyTo(wordsFile)
+        return File(fileName).readLines().map {
             val split = it.split("|")
             Word(split[0], split[1], split[2].toIntOrNull() ?: 0)
         }
@@ -77,6 +84,10 @@ class LearnWordsTrainer(private val learnedWordsCount: Int = 3, private val toLe
             .joinToString("\n", "${questionWord.original}:\n", "\n----------\n0 - Меню\n")
     }
 
+    fun resetProgress() {
+        dictionary.forEach { it.correctAnswersCount = 0 }
+        saveDictionary()
+    }
 }
 
 
