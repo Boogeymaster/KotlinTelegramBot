@@ -8,7 +8,7 @@ import kotlin.text.substringAfter
 @Serializable
 data class Update(
     @SerialName("update_id")
-    val updateId: Long,
+    val updateId: Long? = null,
     @SerialName("message")
     val message: Message? = null,
     @SerialName("callback_query")
@@ -17,7 +17,7 @@ data class Update(
 
 @Serializable
 data class Response(
-    val result: List<Update>,
+    val result: List<Update>? = null,
 )
 
 @Serializable
@@ -39,15 +39,15 @@ data class CallbackQuery(
 @Serializable
 data class Chat(
     @SerialName("id")
-    val id: Long,
+    val id: Long? = null,
 )
 
 @Serializable
 data class SendMessRequest(
     @SerialName("chat_id")
-    val chatId: Long,
+    val chatId: Long? = null,
     @SerialName("text")
-    val text: String,
+    val text: String? = null,
     @SerialName("reply_markup")
     val replyMarkup: ReplyMarkup? = null,
 
@@ -56,15 +56,15 @@ data class SendMessRequest(
 @Serializable
 data class ReplyMarkup(
     @SerialName("inline_keyboard")
-    val inlineKeyboards: List<List<InlineKeyboard>>,
+    val inlineKeyboards: List<List<InlineKeyboard>>? = null,
 )
 
 @Serializable
 data class InlineKeyboard(
     @SerialName("text")
-    val text: String,
+    val text: String? = null,
     @SerialName("callback_data")
-    val callbackData: String,
+    val callbackData: String? = null,
 
     )
 
@@ -78,12 +78,16 @@ fun main(args: Array<String>) {
     }
     while (true) {
         val responseString = botService.getUpdates(updateId)
-        println(responseString)
-        val response: Response = json.decodeFromString(responseString)
-        if (response.result.isEmpty()) continue
-        val sortedUpdates = response.result.sortedBy { it.updateId }
-        sortedUpdates.forEach { handleUpdate(it, botService, trainers) }
-        updateId = sortedUpdates.last().updateId + 1
+        var response: Response
+        try {
+            response = json.decodeFromString(responseString)
+        } catch ( e: Exception){
+            continue
+        }
+        if (response.result?.isEmpty() == true) continue
+        val sortedUpdates = response.result?.sortedBy { it.updateId }
+        sortedUpdates?.forEach { handleUpdate(it, botService, trainers) }
+        updateId = sortedUpdates?.last()?.updateId?.plus(1) ?: continue
     }
 }
 
@@ -115,7 +119,6 @@ fun handleUpdate(update: Update, botService: TelegramBotService, trainers: HashM
             trainer.resetProgress()
             botService.sendMessage(chatId, "Прогресс успешно сброшен")
         }
-
         STATISTIC_BUTTON -> {
             val statistics = trainer.getStatistics()
             botService.sendMessage(
