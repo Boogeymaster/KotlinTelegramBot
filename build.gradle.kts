@@ -1,6 +1,7 @@
 plugins {
     kotlin("jvm") version "2.1.20"
     kotlin("plugin.serialization") version "2.1.20"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "org.example"
@@ -19,5 +20,12 @@ tasks.test {
     useJUnitPlatform()
 }
 kotlin {
-    jvmToolchain(23)
+    jvmToolchain(21)
+}
+
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    archiveClassifier.set("")
+    manifest {
+        attributes(mapOf("Main-Class" to "kotlinTelegramBot.TelegramKt")) // укажи реальный путь
+    }
 }
